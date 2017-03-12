@@ -12,7 +12,11 @@ namespace STAGE
 {
     public partial class Inscription : Form
     {
+
         SqlDbConnect ocon;
+        SqlDbConnect con2;
+        int nombreinscrit;
+        int nbplace;
         //int num;
         public Inscription()
         {
@@ -21,6 +25,7 @@ namespace STAGE
 
         private void Inscription_Load(object sender, EventArgs e)
         {
+            //stage.liststage.Clear();
             foreach (TextBox t in Controls.OfType<TextBox>())
             {
                 t.ReadOnly = true;
@@ -33,34 +38,42 @@ namespace STAGE
             comboBox2.Items.Add("SIFE");
             comboBox2.Items.Add("Ch.Force");
             comboBox2.Items.Add("Cde Public");
-            class_stagiaire cs = new class_stagiaire();
+            
             ocon = new SqlDbConnect();
             Tstage.Text = stage.liststage[0].Nomstage;
             Tdebut.Text = stage.liststage[0].Datedebut.ToShortDateString().ToString();
             Tfin.Text= stage.liststage[0].Datefin.ToShortDateString().ToString();
-            int i = 0;
-            ocon.SqlQuery($"select noms,prenom,nums from stagiaire ");
+            
+            ocon.SqlQuery($"select noms,prenom,nums from stagiaire where stagiaire.nums not in (select num from inscription)");
             //MessageBox.Show($"{ocon.QueryEx().ToString()}");
+            combo();
+            
+        }
+        public void combo()
+        {
+            class_stagiaire cs;
+            int i = 0;
+            class_stagiaire.list_stagiaire.Clear();
+            comboBox1.Items.Clear();
             try
             {
 
                 for (i = 0; i < ocon.QueryEx().Rows.Count; i++)
                 {
+                    cs = new class_stagiaire();
                     comboBox1.Items.Add($" {ocon.QueryEx().Rows[i][0]} {ocon.QueryEx().Rows[i][1]} ");
                     cs.Noms = ocon.QueryEx().Rows[i][0].ToString();
                     cs.Prenom = ocon.QueryEx().Rows[i][1].ToString();
                     cs.Nums = ocon.QueryEx().Rows[i][2].ToString();
                     class_stagiaire.list_stagiaire.Add(cs);
                 }
-                
-            }
-            catch(Exception)
-            {
-                MessageBox.Show($"Aucune personne est inscrit dans ce");
-            }
-            
-        }
 
+            }
+            catch (Exception)
+            {
+                MessageBox.Show($"Aucune personne est inscrit dans la base !");
+            }
+        }
         private void button1_Click(object sender, EventArgs e)
         {
             stagiaire sg = new stagiaire();
@@ -70,23 +83,44 @@ namespace STAGE
 
         private void button2_Click(object sender, EventArgs e)
         {
-            //try
-            //{
+            con2 = new SqlDbConnect();
+            con2.SqlQuery($"select nbplace,nbinscrit from stage where cds='{stage.liststage[0].Cds}'");
+            nbplace= int.Parse(con2.QueryEx().Rows[0][0].ToString());
+            nombreinscrit= int.Parse(con2.QueryEx().Rows[0][1].ToString());
+            if(nbplace<nombreinscrit)
+            {
                 ocon.SqlQuery("INSERT INTO [dbo].[inscription]([cds],[num],[statut],[codeposition],[date_inscription]) VALUES(@cds,@num,@statut,@codeposition,@date_inscription);");
-                ocon.Cmd.Parameters.Add("nums", SqlDbType.VarChar).Value = class_stagiaire.list_stagiaire[comboBox1.SelectedIndex].Nums;
+                ocon.Cmd.Parameters.Add("num", SqlDbType.VarChar).Value = class_stagiaire.list_stagiaire[comboBox1.SelectedIndex].Nums;
+                ocon.Cmd.Parameters.Add("statut", SqlDbType.VarChar).Value = comboBox2.Text;
+                ocon.Cmd.Parameters.Add("cds", SqlDbType.VarChar).Value = stage.liststage[0].Cds;
+                ocon.Cmd.Parameters.Add("codeposition", SqlDbType.Int).Value = 3;
+                ocon.Cmd.Parameters.Add("date_inscription", SqlDbType.DateTime).Value = DateTime.Now.Date;
+                ocon.NonQueryEx();
+                MessageBox.Show("Bien Mis a jour !");
+                con2 = new SqlDbConnect();
+                con2.SqlQuery($"update stage set nbinscrit={nombreinscrit + 1} where cds='{stage.liststage[0].Cds}'");
+                con2.NonQueryEx();
+            }
+            else
+            {
+                ocon.SqlQuery("INSERT INTO [dbo].[inscription]([cds],[num],[statut],[codeposition],[date_inscription]) VALUES(@cds,@num,@statut,@codeposition,@date_inscription);");
+                ocon.Cmd.Parameters.Add("num", SqlDbType.VarChar).Value = class_stagiaire.list_stagiaire[comboBox1.SelectedIndex].Nums;
                 ocon.Cmd.Parameters.Add("statut", SqlDbType.VarChar).Value = comboBox2.Text;
                 ocon.Cmd.Parameters.Add("cds", SqlDbType.VarChar).Value = stage.liststage[0].Cds;
                 ocon.Cmd.Parameters.Add("codeposition", SqlDbType.Int).Value = 2;
                 ocon.Cmd.Parameters.Add("date_inscription", SqlDbType.DateTime).Value = DateTime.Now.Date;
                 ocon.NonQueryEx();
                 MessageBox.Show("Bien Mis a jour !");
-            //}
-            //catch (Exception)
-            //{
+                con2 = new SqlDbConnect();
+                con2.SqlQuery($"update stage set nbinscrit={nombreinscrit + 1} where cds='{stage.liststage[0].Cds}'");
+                con2.NonQueryEx();
 
-            //    MessageBox.Show("Error",  "Error",MessageBoxButtons.OK, MessageBoxIcon.Error);
-            //}
-            
+            }
+            combo();
+            foreach(TextBox t in Controls.OfType<TextBox>())
+            {
+                t.Text = "";
+            }
         }
 
         private void selectedindexchanged1(object sender, EventArgs e)

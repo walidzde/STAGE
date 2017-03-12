@@ -79,7 +79,7 @@ namespace STAGE
                     x = true;
                 }
             }
-            if(dateTimePicker1.Value>=DateTime.Now.Date)
+            if(dateTimePicker1.Value>=DateTime.Now.Date || dateTimePicker1.Value.Year>=1999)
             {
                 errorProvider1.SetError(dateTimePicker1, "La date est fausse");
                 x = true;

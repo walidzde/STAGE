@@ -43,9 +43,9 @@ namespace STAGE
         {
             
             ocon = new SqlDbConnect();
-            ocon.SqlQuery("select ts as 'Type Stage',debuts as 'Date Debut',fins as 'Date Fin',nbplace as 'Nombre du place',nbinscrit 'nombre inscrit',cds from stage where debuts>getdate()");
+            ocon.SqlQuery("select ts as 'Type Stage',debuts as 'Date Debut',fins as 'Date Fin',nbplace as 'Nombre du place',nbinscrit as 'nombre inscrit',cds  from stage where debuts>getdate()");
             dgvliststage.DataSource = ocon.QueryEx();
-            MessageBox.Show("test");
+            //MessageBox.Show("test");
         }
 
         private void button1_Click(object sender, EventArgs e)
